@@ -1,0 +1,88 @@
+\documentclass[a4paper,14pt]{extarticle}
+\usepackage{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{colortbl}
+\usepackage{tikz}
+\usepackage{pgfgantt} % для диаграммы ганта
+\usepackage{pgf}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{indentfirst}
+\usepackage[colorlinks,citecolor=blue,linkcolor=blue,bookmarks=false,hypertexnames=true, urlcolor=blue]{hyperref} 
+\usepackage{indentfirst}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage[flushleft]{threeparttable}
+\usepackage{tablefootnote}
+
+\usepackage{chngcntr}  % нумерация графиков и таблиц по секциям
+\counterwithin{table}{section}
+\counterwithin{figure}{section}
+
+\graphicspath{{graphics/}} % путь к рисункам
+
+\usepackage{pdflscape}
+
+\makeatletter
+\renewcommand{\@biblabel}[1]{#1.} % Заменяем библиографию с квадратных скобок на точку:
+\makeatother
+
+\geometry{left=3cm} % левое поле ГОСТ!!!
+\geometry{right=1.5cm} % правое поле
+\geometry{top=2cm} % верхнее поле ГОСТ!!!
+\geometry{bottom=2cm} % нижнее поле ГОСТ!!!
+\renewcommand{\baselinestretch}{1.5} % междустрочный интервал
+
+
+\newcommand{\bibref}[2]{\hyperlink{#1}{#2}} % biblabel, authors, year
+\addto\captionsrussian{\def\refname{Список литературы}} 
+
+\renewcommand{\theenumi}{\arabic{enumi}}% Меняем везде перечисления на цифра.цифра
+\renewcommand{\labelenumi}{\arabic{enumi}}% Меняем везде перечисления на цифра.цифра
+\renewcommand{\theenumii}{.\arabic{enumii}}% Меняем везде перечисления на цифра.цифра
+\renewcommand{\labelenumii}{\arabic{enumi}.\arabic{enumii}.}% Меняем везде перечисления на цифра.цифра
+\renewcommand{\theenumiii}{.\arabic{enumiii}}% Меняем везде перечисления на цифра.цифра
+\renewcommand{\labelenumiii}{\arabic{enumi}.\arabic{enumii}.\arabic{enumiii}.}% Меняем везде перечисления на цифра.цифра
+
+\usepackage{Style/code}
+
+\begin{document}
+\renewcommand{\thelstlisting}{\thesection.\arabic{lstlisting}}
+
+\input{title.tex}% это титульный лист
+\newpage
+\input{annotation}
+\newpage
+\setcounter{page}{2}
+{
+	\hypersetup{linkcolor=black}
+	\tableofcontents
+}
+\newpage
+\input{glossary}
+\newpage 
+\input{introduction}
+\clearpage
+\input{dataset_description}
+\newpage
+\input{lit_overview}
+\newpage
+\input{data_preparation}
+%\newpage
+%\input{first_chapter}
+%\newpage
+%\input{conclusion}
+\newpage
+\input{appendix}
+\newpage
+\input{bibliography}
+
+\end{document}

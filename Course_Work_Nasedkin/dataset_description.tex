@@ -1,0 +1,154 @@
+\section{Описательный анализ данных}
+
+Опубликованный набор данных iPinYou включает несколько типов логов, отражающих ключевые этапы RTB-процесса: журналы ставок в аукционах (bidding log), журналы показов/кликов/конверсий (impression / click / conversion log), а также вспомогательные таблицы (категории рекламодателей, профили пользователей, соответствия регионов и городов). Ниже приведено описание основных сущностей и полей.
+
+\subsection{Журнал ставок}
+Каждая строка журнала содержит сведения из трёх измерений: (1) пользователь, (2) рекламный слот, (3) параметры ставки и рекламной кампании. Формат данных представлен в Таблице \ref{tab:bidding_log_format}.
+
+Дадим некоторым полям более подробное описания:
+
+\begin{itemize}
+    \item \textbf{Timestamp} -- момент времени, когда запрос ставки (bid request) поступает на DSP в формате yyyyMMddHHmmssSSS.
+    \item \textbf{iPinYou ID} -- идентификатор пользователя (cookie), установленный iPinYou.
+    \item \textbf{User Agent} -- информация об операционной системе клиента, типе браузера, модели устройства.
+    \item \textbf{IP address} -- первые три байта IP-адреса пользователя. Последний байт удаляется в целях защиты приватности.
+    \item \textbf{Ad exchange} -- идентификатор рекламной биржи, с которой пришёл данный аукцион. Возможные значения: 1--6, соответствующие Tanx (Alibaba), Adx (Google DoubleClick AdX), Tencent (Tencent), Baidu (Baidu), Youku (Youku), Amx (Google Mobile) соответственно.
+    \item \textbf{URL, Anonymous URL ID} -- URL страницы, на которой должен быть показан рекламный слот. Издатель может запретить передавать этот URL в DSP, в таком случае используется поле \textbf{Anonymous URL ID}. 
+    \item \textbf{Ad slot ID} -- уникальный идентификатор рекламного слота (места размещения) на странице. Одна страница может содержать несколько рекламных слотов.
+    \item \textbf{Ad slot width}, \textbf{Ad slot height} -- ширина и высота рекламного слота. Поля могут быть массивами, что означает допустимость нескольких размеров креатива для данного слота.
+    \item \textbf{Ad slot visibility} -- видимость слота: на верхней части страницы (FirstView), или ниже (SecondView-TenthView), неизвестно (Na).
+    \item \textbf{Ad slot format} -- формат слота: фиксированное место (Fixed), всплывающее окно (Pop), неизвестно (Na).
+    \item \textbf{Ad slot floor price} -- минимальная цена, при которой издатель допускает победу DSP в аукционе. Если ни одна ставка не превышает минимальную, победителя нет. Перед публикацией применяется линейное масштабирование значения. Единица измерения: юань за CPM.
+    \item \textbf{Creative ID} -- идентификатор рекламного креатива рекламодателя, по которому DSP делает ставку.
+    \item \textbf{Bidding price} -- ставка DSP в аукционе. Перед публикацией применяется линейное масштабирование значения. Единица измерения: юань за CPM.
+    \item \textbf{User Profile IDs} -- тэги пользователя, однако в bidding log эти значения всегда пусты по соображениям безопасности. Поле представляет собой массив числовых идентификаторов категорий.
+\end{itemize}
+
+\begin{table}[h!]
+\small
+  \begin{center}
+    \caption{Формат данных bidding log. Столбцы, отмеченные символом \textasteriskcentered, содержат значения, которые были захэшированы или модифицированы перед публикацией лога.}
+    \label{tab:bidding_log_format}
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabular}{c|c|l|p{10.5cm}}
+      \textbf{N} & \textbf{*} & \textbf{Column} & \textbf{Example} \\
+      \hline
+      1  & \textasteriskcentered & Bid ID & c0550000008e5a94ac18823d6f275121 \\
+      2  &  & Timestamp & 20130218134701883 \\
+      3  & \textasteriskcentered & iPinYou ID & 35605620124122340227135 \\
+      4  &  & User-Agent &
+      Mozilla/5.0 (Windows NT 5.1) AppleWebKit/535.11 (KHTML, like Gecko)\\
+      &&& Chrome/17.0.963.84 Safari/535.11 SE 2.X MetaSr 1.0 \\
+      5  & \textasteriskcentered & IP & 119.163.222.\textasteriskcentered \\
+      6  &  & Region ID & 146 \\
+      7  &  & City ID & 147 \\
+      8  &  & Ad Exchange & 2 \\
+      9  & \textasteriskcentered & Domain & e80f4ec7f5bfbc9ca416a8c01cd1a049 \\
+      10 & \textasteriskcentered & URL & hz55b000008e5a94ac18823d6f275121 \\
+      11 &  & Anonymous URL & null \\
+      12 &  & Ad Slot ID & 9737269023493 \\
+      13 &  & Ad Slot Width & 300 \\
+      14 &  & Ad Slot Height & 250 \\
+      15 &  & Ad Slot Visibility & FirstView \\
+      16 &  & Ad Slot Format & Na \\
+      17 & \textasteriskcentered & Ad Slot Floor Price & 0 \\
+      18 &  & Creative ID & f80f4ec7f5bfbc9ca416a8c01cd1a049 \\
+      19 & \textasteriskcentered & Bidding Price & 573 \\
+      20 &  & Advertiser ID & 2259 \\
+      21 & \textasteriskcentered & User Profile IDs & null \\
+    \end{tabular}
+  \end{center}
+\end{table}
+
+\subsection{Журнал показов / кликов / конверсий}
+В журналах показов, кликов и конверсий поля совпадают с журналом ставок. Помимо полей из журнала ставок дополнительно присутствуют следующие поля:
+
+\begin{itemize}
+    \item \textbf{Log type} -- тип события: 1 (показ), 2 (клик), 3 (конверсия).
+    \item \textbf{Paying price} -- фактическая цена, которую платит победившая DSP на бирже. Перед публикацией, аналогично ставкам, применяется линейное масштабирование. Единица измерения: юань за CPM.
+    \item \textbf{Landing page URL} -- URL страницы, на которую переходит пользователь при клике по креативу.
+\end{itemize}
+
+Формат которых описан в Таблице \ref{tab:imp_clck_conv_log_format}:
+
+\begin{table}[h!]
+\small
+  \begin{center}
+    \caption{Формат данных impression/click/conversion log. Столбцы, отмеченные символом \textasteriskcentered, содержат значения, которые были захэшированы или модифицированы перед публикацией лога.}
+    \label{tab:imp_clck_conv_log_format}
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabular}{c|c|l|p{10.5cm}}
+      \textbf{N} & \textbf{*} & \textbf{Column} & \textbf{Example} \\
+      \hline
+      1  &  & Bid ID & 01530000008a77e7ac18823f5a4f5121 \\
+      2  &  & Timestamp & 20130218134701883 \\
+      3  &  & Log Type & 1 \\
+      4  & \textasteriskcentered & iPinYou ID & 35605620124122340227135 \\
+      5  &  & User-Agent & Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0) \\
+      6  & \textasteriskcentered & IP & 118.81.189. \\
+      7  & \textasteriskcentered & Region ID & 15 \\
+      8  &  & City ID & 16 \\
+      9  &  & Ad Exchange & 2 \\
+      10 & \textasteriskcentered & Domain & e80f4ec7f5bfbc9ca416a8c01cd1a049 \\
+      11 & \textasteriskcentered & URL & hz55b000008e5a94ac18823d6f275121 \\
+      12 &  & Anonymous URL & null \\
+      13 &  & Ad Slot ID & 21476898764813 \\
+      14 &  & Ad Slot Width & 300 \\
+      15 &  & Ad Slot Height & 250 \\
+      16 &  & Ad Slot Visibility & SecondView \\
+      17 &  & Ad Slot Format & Fixed \\
+      18 & \textasteriskcentered & Ad Slot Floor Price & 0 \\
+      19 &  & Creative ID & e39e178fdf366606f8cab791ee56bcd \\
+      20 & \textasteriskcentered & Bidding Price & 753 \\
+      21 & \textasteriskcentered & Paying Price & 15 \\
+      22 & \textasteriskcentered & Landing Page URL & a8be178fdf366606f8cab791ee56bcd \\
+      23 &  & Advertiser ID & 3358 \\
+      24 & \textasteriskcentered & User Profile IDs & 123,5678,3456 \\
+    \end{tabular}
+  \end{center}
+\end{table}
+
+\subsection{Категории рекламодателей}
+Для идентификации рекламодателя используется поле \textbf{Advertiser ID}. Полный перечень категорий рекламодателей приведён в Таблице \ref{tab:advertiser_category}.
+
+\begin{table}[h!]
+\small
+  \begin{center}
+    \caption{Категории рекламодателей.}
+    \label{tab:advertiser_category}
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabular}{l|l}
+      \textbf{Advertiser Key} & \textbf{Industrial Category} \\
+      \hline
+      1458 & Chinese vertical e-commerce \\
+      3358 & Software \\
+      3386 & International e-commerce \\
+      3427 & Oil \\
+      3476 & Tire \\
+      2259 & Milk powder \\
+      2261 & Telecom \\
+      2821 & Footwear \\
+      2997 & Mobile e-commerce app install \\
+    \end{tabular}
+  \end{center}
+\end{table}
+
+
+\subsection{Профиль пользователя}
+iPinYou разработала классификацию аудитории для описания характеристик пользователей по нескольким аспектам: демография, география, долгосрочные интересы (long-term) и покупательские намерения (in-market).
+
+Данные профилей представляют собой таблицу соответствий между идентификатором категории и её названием.
+
+\subsection{Таблица регионов и городов}
+iPinYou предоставляет два файла: (1) соответствие \textbf{region id} $\rightarrow$ \textbf{region name} и (2) соответствие \textbf{city id} $\rightarrow$ \textbf{city name}. Все значения регионов и городов относятся к географическим локациям материкового Китая.
+ 
+\subsection{Предварительная обработка данных}
+
+Отметим, перед публикацией данных iPinYou исключает из bidding log площадки с подозрительной активностью. Для обнаружения спама используются специализированные алгоритмы фильтрации \cite{ipinyou-contest-database}.
+
+В ходе валидации качества данных при помощи скрипта были выявлены и устранены несколько типов аномалий и несоответствий. Во-первых, в таблице bidding log в поле user agent встречались некорректные значения: одиночный символ '':'', использовавшийся вместо пропуска, а также строки, содержащие IP-адрес. Для таких записей были заданы пустые значения user agent. Во-вторых, было обнаружено, что для части идентификаторов городов, присутствующих в bidding log, отсутствует соответствие в таблице городов (не задано текстовое наименование города) -- подобные случаи будут обработаны базой данных во время операций \textbf{JOIN}.
+
+Кроме того, в данных встречались записи, где идентификатор рекламной биржи отсутствовал, несмотря на строгий формат возможных значений 1-6. Для обеспечения целостности данных и корректности группировок при последующем анализе было введено дополнительное значение категории -- 0, соответствующее случаю Unknown. Наконец, при подготовке файлов к загрузке в СУБД были выявлены различия в кодировке переводов строк (Windows CRLF vs Unix LF): данное несоответствие было устранено на этапе предобработки скриптом для обеспечения корректного парсинга строк.
+
+Для повышения ценности данных на основе поля user agent с помощью отдельной программы-парсера были сформированы два дополнительных признака: browser (тип браузера) и platform (устройство/платформа). Полученные признаки далее используются при сегментации трафика и анализе зависимостей метрик эффективности от технических характеристик пользователя.
+

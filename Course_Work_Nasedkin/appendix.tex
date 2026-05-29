@@ -1,0 +1,240 @@
+\newpage
+\section*{Приложения}
+\addcontentsline{toc}{section}{Приложения}
+
+\subsection*{Приложение 1. DDL-схема таблиц ClickHouse}
+\label{app:ddl}
+
+Ниже приведены полные DDL-определения четырёх таблиц, созданных в ClickHouse для хранения логов iPinYou. Таблицы \texttt{imp\_log}, \texttt{clk\_log} и \texttt{conv\_log} имеют идентичную схему, расширенную по сравнению с \texttt{bid\_log} полями \texttt{log\_type}, \texttt{paying\_price} и \texttt{landing\_page\_url}.
+
+\begin{lstlisting}[caption={DDL: таблица bid\_log}, label=lst:ddl_bid]
+CREATE TABLE bid_log
+(
+    bid_id              String,
+    timestamp_raw       String,
+    ts                  DateTime64(3) MATERIALIZED
+        parseDateTime64BestEffort(
+            concat(
+                substring(timestamp_raw,  1, 4), '-',
+                substring(timestamp_raw,  5, 2), '-',
+                substring(timestamp_raw,  7, 2), ' ',
+                substring(timestamp_raw,  9, 2), ':',
+                substring(timestamp_raw, 11, 2), ':',
+                substring(timestamp_raw, 13, 2), '.',
+                substring(timestamp_raw, 15, 3)
+            ), 3),
+    ipinyou_id          Nullable(String),
+    user_agent          Nullable(String),
+    ip                  Nullable(String),
+    region_id           Nullable(UInt32),
+    city_id             Nullable(UInt32),
+    ad_exchange         UInt8 DEFAULT 0,
+    domain              Nullable(String),
+    url                 Nullable(String),
+    anonymous_url       Nullable(String),
+    ad_slot_id          String,
+    ad_slot_width       Nullable(UInt32),
+    ad_slot_height      Nullable(UInt32),
+    ad_slot_visibility  LowCardinality(Nullable(String)),
+    ad_slot_format      LowCardinality(Nullable(String)),
+    ad_slot_floor_price Nullable(UInt32),
+    creative_id         Nullable(String),
+    bidding_price       Nullable(UInt32),
+    advertiser_id       Nullable(UInt32),
+    user_profile_ids    Nullable(String),
+    platform            String,
+    browser             String
+)
+ENGINE = MergeTree()
+ORDER BY ts;
+\end{lstlisting}
+
+\begin{lstlisting}[caption={DDL: imp\_log / clk\_log / conv\_log (same schema)}, label=lst:ddl_imp]
+CREATE TABLE imp_log
+(
+    bid_id              String,
+    timestamp_raw       String,
+    ts                  DateTime64(3) MATERIALIZED
+        parseDateTime64BestEffort(
+            concat(
+                substring(timestamp_raw,  1, 4), '-',
+                substring(timestamp_raw,  5, 2), '-',
+                substring(timestamp_raw,  7, 2), ' ',
+                substring(timestamp_raw,  9, 2), ':',
+                substring(timestamp_raw, 11, 2), ':',
+                substring(timestamp_raw, 13, 2), '.',
+                substring(timestamp_raw, 15, 3)
+            ), 3),
+    log_type            UInt8,
+    ipinyou_id          Nullable(String),
+    user_agent          Nullable(String),
+    ip                  Nullable(String),
+    region_id           Nullable(UInt32),
+    city_id             Nullable(UInt32),
+    ad_exchange         UInt8 DEFAULT 0,
+    domain              Nullable(String),
+    url                 Nullable(String),
+    anonymous_url       Nullable(String),
+    ad_slot_id          String,
+    ad_slot_width       Nullable(UInt32),
+    ad_slot_height      Nullable(UInt32),
+    ad_slot_visibility  LowCardinality(Nullable(String)),
+    ad_slot_format      LowCardinality(Nullable(String)),
+    ad_slot_floor_price Nullable(UInt32),
+    creative_id         Nullable(String),
+    bidding_price       Nullable(UInt32),
+    paying_price        Nullable(UInt32),
+    landing_page_url    Nullable(String),
+    advertiser_id       Nullable(UInt32),
+    user_profile_ids    Nullable(String),
+    platform            String,
+    browser             String
+)
+ENGINE = MergeTree()
+ORDER BY ts;
+\end{lstlisting}
+
+\subsection*{Приложение 2. Скрипт обогащения данных ipinyou\_enricher.py}
+\label{app:enricher}
+
+Скрипт выполняет разбор поля \texttt{user\_agent} и добавляет в каждую строку TSV-файла два новых поля: \texttt{platform} и \texttt{browser}. Поддерживает два режима работы: \texttt{--mode bidding} (индекс User-Agent: 3) и \texttt{--mode impression} (индекс User-Agent: 4).
+
+\begin{lstlisting}[caption={ipinyou\_enricher.py — полный исходный код}, label=lst:enricher_full]
+import sys
+import argparse
+import os
+
+def get_ua_info(ua):
+    if not ua or ua == '\\N':
+        return 'Unknown', 'Unknown'
+
+    ua_lower = ua.lower()
+
+    # Platform detection
+    if 'android' in ua_lower:
+        platform = 'Android'
+    elif any(x in ua_lower for x in ['iphone', 'ipad', 'ipod']):
+        platform = 'iPhone'
+    elif 'windows nt' in ua_lower:
+        platform = 'Windows'
+    elif 'macintosh' in ua_lower or 'mac os x' in ua_lower:
+        platform = 'Mac'
+    elif 'linux' in ua_lower:
+        platform = 'Linux'
+    else:
+        platform = 'Other'
+
+    # Browser detection
+    if 'msie' in ua_lower or 'trident' in ua_lower:
+        browser = 'IE'
+    elif 'chrome' in ua_lower:
+        browser = 'Chrome'
+    elif 'firefox' in ua_lower:
+        browser = 'Firefox'
+    elif 'ucbrowser' in ua_lower:
+        browser = 'UCBrowser'
+    elif 'baiduboxapp' in ua_lower or 'bidubrowser' in ua_lower:
+        browser = 'Baidu'
+    elif 'safari' in ua_lower and 'chrome' not in ua_lower:
+        browser = 'Safari'
+    else:
+        browser = 'Other'
+
+    return platform, browser
+
+def process_file(input_path, output_path, mode):
+    ua_index = 3 if mode == 'bidding' else 4
+    print(f"Starting enrichment: {input_path} -> {output_path}")
+    count = 0
+    try:
+        with open(input_path, 'r', encoding='utf-8', errors='replace') as f_in, \
+             open(output_path, 'w', encoding='utf-8') as f_out:
+            for line in f_in:
+                row = line.rstrip('\n').split('\t')
+                ua = row[ua_index] if len(row) > ua_index else '\\N'
+                platform, browser = get_ua_info(ua)
+                row.append(platform)
+                row.append(browser)
+                f_out.write('\t'.join(row) + '\n')
+                count += 1
+                if count
+                    print(f"Processed {count // 1000000}M rows...")
+    except KeyboardInterrupt:
+        print("\nInterrupted by user.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+    print(f"Done! Total processed: {count}")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="iPinYou Data Enricher (Platform & Browser)")
+    parser.add_argument('--input',  required=True)
+    parser.add_argument('--output', required=True)
+    parser.add_argument('--mode',   choices=['bidding', 'impression'],
+                        required=True)
+    args = parser.parse_args()
+    process_file(args.input, args.output, args.mode)
+\end{lstlisting}
+
+\subsection*{Приложение 3. SQL-запрос формирования таблицы ads\_data}
+\label{app:merge_sql}
+
+Ниже приведён SQL-запрос, формирующий итоговую аналитическую таблицу путём объединения четырёх исходных таблиц по ключу \texttt{bid\_id}.
+
+\begin{lstlisting}[caption={Формирование joined\_ads\_data via ANY LEFT JOIN}, label=lst:merge_full]
+-- Step 1: join bid_log with imp_log, clk_log, conv_log
+CREATE TABLE joined_ads_data
+ENGINE = MergeTree
+ORDER BY bid_id
+AS
+SELECT
+    b.*,
+    i.paying_price,
+    cl.landing_page_url,
+    notEmpty(i.bid_id)  AS is_win,
+    notEmpty(cl.bid_id) AS is_clicked,
+    notEmpty(co.bid_id) AS is_conversion
+FROM bid_log AS b
+ANY LEFT JOIN imp_log  AS i  ON b.bid_id = i.bid_id
+ANY LEFT JOIN clk_log  AS cl ON b.bid_id = cl.bid_id
+ANY LEFT JOIN conv_log AS co ON b.bid_id = co.bid_id;
+
+-- Step 2: final table ads_data, advertiser_id NOT NULL (DEFAULT 0)
+CREATE TABLE ads_data
+ENGINE = MergeTree
+ORDER BY advertiser_id
+AS
+SELECT
+    bid_id,
+    ts,
+    timestamp_raw,
+    ipinyou_id,
+    user_agent,
+    ip,
+    region_id,
+    city_id,
+    ad_exchange,
+    domain,
+    url,
+    anonymous_url,
+    ad_slot_id,
+    ad_slot_width,
+    ad_slot_height,
+    ad_slot_visibility,
+    ad_slot_format,
+    ad_slot_floor_price,
+    creative_id,
+    bidding_price,
+    coalesce(advertiser_id, 0) AS advertiser_id,
+    user_profile_ids,
+    platform,
+    browser,
+    paying_price,
+    landing_page_url,
+    is_win,
+    is_clicked,
+    is_conversion
+FROM joined_ads_data;
+\end{lstlisting}
