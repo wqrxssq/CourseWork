@@ -1,0 +1,15 @@
+CREATE TABLE joined_ads_data
+ENGINE = MergeTree()
+ORDER BY bid_id
+AS
+SELECT
+    b.*,
+    i.paying_price,
+    cl.landing_page_url,
+    notEmpty(i.bid_id)  AS is_win,
+    notEmpty(cl.bid_id) AS is_clicked,
+    notEmpty(co.bid_id) AS is_conversion
+FROM bid_log AS b
+ANY LEFT JOIN imp_log  AS i  ON b.bid_id = i.bid_id
+ANY LEFT JOIN clk_log  AS cl ON b.bid_id = cl.bid_id
+ANY LEFT JOIN conv_log AS co ON b.bid_id = co.bid_id;
