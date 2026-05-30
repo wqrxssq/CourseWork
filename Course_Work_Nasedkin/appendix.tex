@@ -1,5 +1,13 @@
-\newpage
-\section*{Приложение}
 \addcontentsline{toc}{section}{Приложение}
-
-\includepdf[pages=1, scale=0.7, pagecommand={}]{pdf/certificate_yc.pdf}
+\includepdf[pages=1, scale=0.75,
+    pagecommand={%
+        \begin{tikzpicture}[remember picture, overlay]
+            \node[anchor=north west, inner sep=0pt, text width=\textwidth]
+                at ([xshift=3cm, yshift=-2cm] current page.north west) {%
+                    \textbf{\large Приложение}\\[0.4em]
+                    \textbf{Приложение 1: Свидетельство о прохождении курса «DataLens: анализ и визуализация данных»}
+                };
+        \end{tikzpicture}%
+    },
+    offset=0 -40
+]{pdf/certificate_yc.pdf}
