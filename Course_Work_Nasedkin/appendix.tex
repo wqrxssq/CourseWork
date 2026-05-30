@@ -239,7 +239,32 @@ SELECT
 FROM joined_ads_data;
 \end{lstlisting}
 
-\subsection*{Приложение 4. Свидетельство о прохождении курса «DataLens: анализ и визуализация данных»}
+\subsection*{Приложение 4. DDL-схема справочных таблиц \texttt{cities} и \texttt{regions}}
+\label{app:ddl_dicts}
+
+Ниже приведены DDL-определения двух справочных таблиц, созданных в ClickHouse для декодирования числовых идентификаторов городов и регионов в читаемые названия. Таблицы используются в датасете Yandex DataLens посредством LEFT JOIN с основной аналитической таблицей \texttt{ads\_data}.
+
+\begin{lstlisting}[caption={DDL: справочная таблица cities}, label=lst:ddl_cities]
+CREATE TABLE ipinyou_db.cities
+(
+    city_id   UInt32,
+    city_name String
+)
+ENGINE = MergeTree
+ORDER BY city_id;
+\end{lstlisting}
+
+\begin{lstlisting}[caption={DDL: справочная таблица regions}, label=lst:ddl_regions]
+CREATE TABLE ipinyou_db.regions
+(
+    region_id   UInt32,
+    region_name String
+)
+ENGINE = MergeTree
+ORDER BY region_id;
+\end{lstlisting}
+
+\subsection*{Приложение 5. Свидетельство о прохождении курса «DataLens: анализ и визуализация данных»}
 \label{app:certificate}
 
 \includepdf[pages=1, scale=0.7, pagecommand={}]{pdf/certificate_yc.pdf}
