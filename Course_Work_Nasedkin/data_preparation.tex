@@ -59,8 +59,6 @@ ClickHouse устанавливался локально с использова
 
 \begin{itemize}
     \item \textbf{Timestamp} хранится в исходном виде как \texttt{String} в поле \texttt{timestamp\_raw} (формат \texttt{yyyyMMddHHmmssSSS}); разбор в тип \texttt{DateTime64(3)} выполняется материализованным столбцом \texttt{ts}
-    \item \textbf{Ad Slot Width / Height} объявлены как \texttt{Nullable(UInt32)}: поля могут содержать пустые значения, а в исходных данных встречаются записи с отсутствующими размерами слота.
-    \item \textbf{Ad Exchange} объявлен как \texttt{UInt8 DEFAULT 0}: значение 0 соответствует введённой при предобработке категории «Unknown» для записей с отсутствующим идентификатором биржи.
     \item \textbf{Advertiser ID} в исходных таблицах объявлен как \texttt{Nullable(UInt32)}; в итоговой аналитической таблице (см. подраздел~\ref{subsec:ads_data}) переведён в обязательное поле с \texttt{DEFAULT 0} для обеспечения корректной сортировки и группировки.
     \item \textbf{Platform / Browser} -- два дополнительных столбца, добавленных скриптом обогащения на этапе предобработки поля \texttt{user\_agent}.
 \end{itemize}
@@ -119,7 +117,7 @@ Yandex DataLens является облачным сервисом и требу
 
 \subsubsection*{Источники данных и схема связей}
 
-Основным источником данных в датасете является таблица \texttt{ads\_data}, сформированная на этапе подготовки данных (см. подраздел~\ref{subsec:ads_data}). Поля \texttt{region\_id} и \texttt{city\_id} в данной таблице хранят числовые идентификаторы, не несущие смысловой нагрузки при визуализации. Для их декодирования в читаемые названия в ClickHouse были созданы две справочные таблицы: \texttt{ipinyou\_db.cities} и \texttt{ipinyou\_db.regions}.
+Основным источником данных в датасете является таблица \texttt{ads\_data}. Для декодирования \texttt{region\_id} и \texttt{city\_id} в читаемые названия в ClickHouse были созданы две справочные таблицы: \texttt{ipinyou\_db.cities} и \texttt{ipinyou\_db.regions}.
 
 Связи между таблицами настраивались непосредственно в интерфейсе датасета DataLens без написания SQL-запросов. К таблице \texttt{ads\_data} были добавлены два LEFT JOIN:
 
