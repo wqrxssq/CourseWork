@@ -11,7 +11,7 @@
 \usepackage{graphicx}
 \usepackage{colortbl}
 \usepackage{tikz}
-\usepackage{pgfgantt} % для диаграммы ганта
+\usepackage{pgfgantt}
 \usepackage{pgf}
 \usepackage{subcaption}
 \usepackage{listings}
@@ -23,67 +23,67 @@
 \usepackage[flushleft]{threeparttable}
 \usepackage{tablefootnote}
 
-\usepackage{chngcntr}  % нумерация графиков и таблиц по секциям
+\usepackage{chngcntr}
 \counterwithin{table}{section}
 \counterwithin{figure}{section}
 
-\graphicspath{{graphics/}} % путь к рисункам
+\graphicspath{{graphics/}}
 
 \usepackage{pdflscape}
 \usepackage{pdfpages}
 
 \makeatletter
-\renewcommand{\@biblabel}[1]{#1.} % Заменяем библиографию с квадратных скобок на точку:
+\renewcommand{\@biblabel}[1]{#1.}
 \makeatother
 
-\geometry{left=3cm} % левое поле ГОСТ!!!
-\geometry{right=1.5cm} % правое поле
-\geometry{top=2cm} % верхнее поле ГОСТ!!!
-\geometry{bottom=2cm} % нижнее поле ГОСТ!!!
-\renewcommand{\baselinestretch}{1.5} % междустрочный интервал
+\geometry{left=3cm}
+\geometry{right=1.5cm}
+\geometry{top=2cm}
+\geometry{bottom=2cm}
+\renewcommand{\baselinestretch}{1.5}
 
 
-\newcommand{\bibref}[2]{\hyperlink{#1}{#2}} % biblabel, authors, year
+\newcommand{\bibref}[2]{\hyperlink{#1}{#2}}
 \addto\captionsrussian{\def\refname{Список литературы}} 
 
-\renewcommand{\theenumi}{\arabic{enumi}}% Меняем везде перечисления на цифра.цифра
-\renewcommand{\labelenumi}{\arabic{enumi}}% Меняем везде перечисления на цифра.цифра
-\renewcommand{\theenumii}{.\arabic{enumii}}% Меняем везде перечисления на цифра.цифра
-\renewcommand{\labelenumii}{\arabic{enumi}.\arabic{enumii}.}% Меняем везде перечисления на цифра.цифра
-\renewcommand{\theenumiii}{.\arabic{enumiii}}% Меняем везде перечисления на цифра.цифра
-\renewcommand{\labelenumiii}{\arabic{enumi}.\arabic{enumii}.\arabic{enumiii}.}% Меняем везде перечисления на цифра.цифра
+\renewcommand{\theenumi}{\arabic{enumi}}
+\renewcommand{\labelenumi}{\arabic{enumi}}
+\renewcommand{\theenumii}{.\arabic{enumii}}
+\renewcommand{\labelenumii}{\arabic{enumi}.\arabic{enumii}.}
+\renewcommand{\theenumiii}{.\arabic{enumiii}}
+\renewcommand{\labelenumiii}{\arabic{enumi}.\arabic{enumii}.\arabic{enumiii}.}
 
 \usepackage{Style/code}
 
 \begin{document}
 \renewcommand{\thelstlisting}{\thesection.\arabic{lstlisting}}
 
-\input{title.tex}% это титульный лист
-\newpage
+\input{title.tex}
+\clearpage
 \input{annotation}
-\newpage
+\clearpage
 \setcounter{page}{2}
 {
 	\hypersetup{linkcolor=black}
 	\tableofcontents
 }
-\newpage
+\clearpage
 \input{glossary}
-\newpage 
+\clearpage
 \input{introduction}
 \clearpage
 \input{dataset_description}
-\newpage
+\clearpage
 \input{lit_overview}
-\newpage
+\clearpage
 \input{dashboard_design}
-\newpage
+\clearpage
 \input{data_preparation}
-\newpage
+\clearpage
 \input{conclusion}
-\newpage
+\clearpage
 \input{bibliography}
-\newpage
+\clearpage
 \input{appendix}
 
 \end{document}
