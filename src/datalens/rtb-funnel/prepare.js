@@ -39,19 +39,67 @@ function fmtPct(value, opts = {}) {
 
 console.log(data);
 
+const actionParams = Editor.getParams();
+console.log(actionParams);
+
+const dateInterval = actionParams?.ts_truncated;
+let dateFrom = null;
+let dateTo = null;
+
+if (dateInterval) {
+    const resolved = Editor.resolveInterval(dateInterval);
+    if (resolved && resolved.from && resolved.to) {
+        dateFrom = new Date(resolved.from);
+        dateTo = new Date(resolved.to);
+    }
+}
+
+console.log('dateFrom:', dateFrom);
+console.log('dateTo:', dateTo);
+
+function cleanParams(arr) {
+    if (!arr || !Array.isArray(arr)) return [];
+    return arr.filter(v => v != null && String(v).trim() !== '');
+}
+
+const selectedPlatform = cleanParams(actionParams?.platform);
+console.log(selectedPlatform);
+
+const selectedBrowser = cleanParams(actionParams?.browser);
+console.log(selectedBrowser);
+
+const selectedAdvertiser = cleanParams(actionParams?.advertiser_name);
+console.log(selectedAdvertiser);
+
+const filteredData = data.filter(row => {
+    const platformMatch = selectedPlatform.length === 0 || selectedPlatform.includes(String(row?.platform));
+    const browserMatch = selectedBrowser.length === 0 || selectedBrowser.includes(String(row?.browser));
+    const advertiserMatch = selectedAdvertiser.length === 0 || selectedAdvertiser.includes(String(row?.advertiser_name));
+    
+    let dateMatch = true;
+    if (dateFrom && dateTo && row?.ts_truncated) {
+        const rowDate = new Date(row.ts_truncated);
+        if (!isNaN(rowDate.getTime())) {
+            dateMatch = rowDate >= dateFrom && rowDate <= dateTo;
+        }
+    }
+    
+    return platformMatch && browserMatch && advertiserMatch && dateMatch;
+});
+
 let bids = 0;
 let imps = 0;
 let clicks = 0;
 let convs = 0;
 
-for (const row of data) {
+for (const row of filteredData) {
     bids += toNumber(row?.bids);
     imps += toNumber(row?.imps);
     clicks += toNumber(row?.clicks);
     convs += toNumber(row?.convs);
 }
 
-const rows = data;
+const rows = filteredData;
 
 const winRatio = bids ? imps / bids : 0;
 const ctr = imps ? clicks / imps : 0;
