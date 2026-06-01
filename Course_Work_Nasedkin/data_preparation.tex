@@ -1,4 +1,5 @@
 \section{Инфраструктура хранения и подготовки данных}
+\label{sec:data_preparation}
 
 Настоящий раздел описывает технический контур, обеспечивающий хранение, нормализацию и аналитическую доступность данных iPinYou: от обоснования выбора СУБД и её развёртывания до определения схемы таблиц, формирования итоговой денормализованной таблицы и подключения к BI-инструменту Yandex DataLens.
 
@@ -101,7 +102,7 @@ Yandex DataLens является облачным сервисом и требу
 
 Подключение DataLens к базе данных настроено с использованием TLS-сертификата и парольной аутентификации, что обеспечивает минимальные требования безопасности при работе с публично доступным туннелем. Интерфейс настройки подключения представлен на Рисунке~\ref{fig:datalens_connection}.
 
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.82\textwidth]{images/connection.jpeg}
     \caption{Настройка подключения ClickHouse в интерфейсе Yandex DataLens.}
@@ -128,7 +129,7 @@ Yandex DataLens является облачным сервисом и требу
 
 Схема связей датасета представлена на Рисунке~\ref{fig:datalens_dataset}.
 
-\begin{figure}[h!]
+\begin{figure}[htbp]
     \centering
     \includegraphics[width=0.72\textwidth]{images/dataset.jpeg}
     \caption{Схема связей датасета в интерфейсе Yandex DataLens: \texttt{ads\_data} ← LEFT JOIN → \texttt{regions}, \texttt{cities}.}
